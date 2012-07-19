@@ -20,13 +20,11 @@ def delete_messages
 
   queue = sqs.queues.named(AMAZON_SQS_TEST_QUEUE)
 
-  flag = true
-  while flag
+  30.times do |i|
     m = queue.receive_message
     if !m.nil?
       m.delete
-    else
-      flag = false
+      puts "#{i}番目のメッセージを削除した"
     end
   end
   
@@ -35,6 +33,9 @@ end
 if ARGV[0] == "buckets"
   delete_buckets
 elsif ARGV[0] == "messages"
+  delete_messages
+else
+  delete_buckets
   delete_messages
 end
 
