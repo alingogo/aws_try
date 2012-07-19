@@ -20,6 +20,9 @@ def image_correction(message)
   str = ""
   b = message["bucket_name"]
   temp = "tmp/tempfile_#{b}.txt"
+  if message["time"] == 5
+    sleep 40
+  end
 
   download_file(b, message["file_name"], temp)
 
@@ -70,13 +73,27 @@ queue = sqs.queues.named(AMAZON_SQS_TEST_QUEUE)
   m = queue.receive_message
   if !m.nil?
     mbody = JSON.parse(m.body)
-    image_deal(mbody)
 
-    puts "***#{mbody['time']}番目のメッセージを処理する***"
-    puts "message body: #{m.body}"
+    timeout = Thread.new(Time.now + 25) do |end_time|
+      while Time.now < end_time
+        Thread.pass
+      end
+      puts "visibility timeoutを60秒に延長した"
+      m.visibility_timeout = 60
+    end
 
-    puts "delete message"
-    m.delete
+    main = Thread.new(timeout) do |timeout|
+      image_deal(mbody)
+      puts "***#{mbody['time']}番目のメッセージを処理する***"
+      puts "message body: #{m.body}"
+
+      puts "delete message"
+      m.delete
+      timeout.terminate
+    end
+
+    main.join
+    timeout.join
 #    flag = false
   end
 end
