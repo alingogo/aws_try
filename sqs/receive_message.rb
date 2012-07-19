@@ -5,6 +5,7 @@ require "aws-sdk"
 require "samples_config"
 require "upload_file"
 require "pp"
+require "timeout"
 
 AMAZON_SQS_TEST_QUEUE = "SQS-Test-Queue-Ruby"
 SQS_TEST_MESSAGE = 'This is a test message.'
@@ -20,6 +21,10 @@ def image_correction(message)
   str = ""
   b = message["bucket_name"]
   temp = "tmp/tempfile_#{b}.txt"
+
+  if message["time"] == 5
+    sleep 40
+  end
 
   download_file(b, message["file_name"], temp)
 
@@ -63,20 +68,37 @@ sqs = AWS::SQS.new
 queue = sqs.queues.named(AMAZON_SQS_TEST_QUEUE)
 
 #flag = true
+time_flag = true
 #while flag
-22.times do |i|
+32.times do |i|
   sleep 3
   puts "waiting message"
-  m = queue.receive_message
+  m = queue.receive_message(:attributes => [:all])
   if !m.nil?
     mbody = JSON.parse(m.body)
-    image_deal(mbody)
+
+    rc =  m.receive_count
+    puts "approximate_receive_count:  #{rc}"
+
+    if rc > 1
+      puts "重複処理messageを発見"
+    else
+      begin
+        timeout(30) do
+          image_deal(mbody)
+        end
+      rescue Timeout::Error
+        puts "Timeout発生"
+        time_flag = false
+      end
+    end
 
     puts "***#{mbody['time']}番目のメッセージを処理する***"
     puts "message body: #{m.body}"
 
     puts "delete message"
-    m.delete
+    m.delete if time_flag
+    time_flag = true
 #    flag = false
   end
 end
