@@ -63,6 +63,11 @@ sqs = AWS::SQS.new
 
 queue = sqs.queues.named(AMAZON_SQS_TEST_QUEUE)
 
+
+puts "**************************"
+puts `date`
+puts "**************************"
+
 #flag = true
 #while flag
 22.times do |i|

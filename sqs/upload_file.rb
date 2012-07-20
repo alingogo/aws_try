@@ -13,7 +13,7 @@
 
 # -*- encoding: utf-8 -*-
 
-require "samples_config"
+require File.join(File.dirname(__FILE__), "samples_config")
 
 def upload_file(bucket_name, file_name)
 
