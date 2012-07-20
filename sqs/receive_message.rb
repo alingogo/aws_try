@@ -1,9 +1,10 @@
 #!/usr/bin/ruby
+# -*- encoding: utf-8 -*-
 
 require "rubygems"
 require "aws-sdk"
-require "samples_config"
-require "upload_file"
+require File.join(File.dirname(__FILE__), "samples_config")
+require File.join(File.dirname(__FILE__), "upload_file")
 require "pp"
 
 AMAZON_SQS_TEST_QUEUE = "SQS-Test-Queue-Ruby"

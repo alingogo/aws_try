@@ -11,6 +11,8 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
+# -*- encoding: utf-8 -*-
+
 require "samples_config"
 
 def upload_file(bucket_name, file_name)

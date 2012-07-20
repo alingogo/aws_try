@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 require "samples_config"
 
 AMAZON_SQS_TEST_QUEUE = "SQS-Test-Queue-Ruby"
