@@ -14,13 +14,14 @@ require "samples_config"
 require "upload_file"
 require "json"
 
-AMAZON_SQS_TEST_QUEUE = "SQS-Test-Queue-Ruby"
+AMAZON_SQS_TEST_QUEUE = "Correction-SQS-Test-Queue"
 
 sqs = AWS::SQS.new
 
 queue = sqs.queues.named(AMAZON_SQS_TEST_QUEUE)
 
-t = ARGV[0].to_i || 10
+t = (ARGV[0] || 10).to_i
+
 t.times do |i|
   bucket_name = "8342_bucket_" + rand(100000).to_s
   file_name = "sample_original.txt"
