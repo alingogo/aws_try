@@ -10,7 +10,7 @@
 
 require "rubygems"
 require "aws-sdk"
-require "samples_config"
+require File.join(File.dirname(__FILE__), "../samples_config")
 require "upload_file"
 require "json"
 

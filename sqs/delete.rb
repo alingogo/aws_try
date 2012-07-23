@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 
-require "samples_config"
+require File.join(File.dirname(__FILE__), "../samples_config")
 
 AMAZON_SQS_TEST_QUEUE = "SQS-Test-Queue-Ruby"
 

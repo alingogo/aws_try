@@ -11,7 +11,7 @@
 
 require "rubygems"
 require "aws-sdk"
-require "samples_config"
+require File.join(File.dirname(__FILE__), "../samples_config")
 require "pp"
 
 AMAZON_SQS_TEST_QUEUE = "SQS-Test-Queue-Ruby"
