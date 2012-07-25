@@ -11,8 +11,10 @@ AMAZON_SQS_TEST_QUEUE = "SQS-Test-Queue-Ruby"
 SQS_TEST_MESSAGE = 'This is a test message.'
 
 
-def image_correction(message, q)
+def image_correction(mes)
   str = ""
+  m = mes.dup
+  message = m["correction"]
   b = message["bucket_name"]
   temp = "tmp/tempfile_#{b}.txt"
 
@@ -30,14 +32,15 @@ def image_correction(message, q)
   upload_file(b, correction_file)
   fn = correction_file.gsub(/tmp\//,"")
 
-  message['type'] = "process"
-  message['file_name'] = fn
-  sent_message = q.send_message(message.to_json)
-  puts "message_id: " + sent_message.message_id
+  m.merge!("correction" => {:status => "done", :update => Time.now.to_s})
+  m.merge!("process" => {:status => "todo", :file_name => fn})
+  m
 end
 
-def image_process(message)
+def image_process(mes)
   str = ""
+  m = mes.dup
+  message = m['process']
   b = message["bucket_name"]
   temp = "tmp/tempfile_#{b}.txt"
 
@@ -54,8 +57,22 @@ def image_process(message)
 
   upload_file(b, image_file)
 
-  image_file
+  m.merge!("process" => {:status => "done", :update => Time.now.to_s})
+
+  m
 end
+
+def send_message(q, m)
+  pp m
+  if m.nil?
+    return
+  elsif m['correction'][:status] == 'done' && m['process'][:status] == 'todo'
+    q.send_message(m.to_json)
+  else
+    puts "send_message error"
+  end
+end
+
 
 sqs = AWS::SQS.new
 
@@ -75,14 +92,15 @@ puts "**************************"
     puts "***#{mbody['time']}番目のメッセージを処理する***"
     puts "message body: #{m.body}"
 
-    case mbody['type']
-    when 'correction'
-      image_correction(mbody, queue)
-    when 'process'
-      image_process(mbody)
-    else
-      puts "処理できないタイプです"
-    end
+    new_mbody = if mbody['correction']['status'] == 'todo'
+                  image_correction(mbody)
+                elsif mbody['correction']['status'] == 'todo'
+                  image_process(mbody)
+                else
+                  nil
+                end
+
+    send_message(queue, new_mbody)
 
     puts "delete message"
     m.delete
