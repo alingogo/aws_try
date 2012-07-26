@@ -23,19 +23,28 @@ queue = sqs.queues.named(AMAZON_SQS_TEST_QUEUE)
 
 t = (ARGV[0] || 10).to_i
 t.times do |i|
-  bucket_name = "8342_bucket_" + rand(100000).to_s
+  content_id = rand(1000000000)
+  bucket_name = "8342_bucket_" + content_id.to_s
   file_name = "sample_original.txt"
 
   bn, fn, dl_url = upload_file(bucket_name, file_name)
 
   body = {}
-  body[:bucket_name] = bn
-  body[:file_name]   = fn
-  body[:time]        = i
+  body[:correction] = { :status => "todo",
+                        :bucket_name => bn,
+                        :file_name => fn}
+  body[:process]    = { :status => "none"}
+  body[:time]       = i
+  yaml_file = File.join(File.dirname(__FILE__), "tmp/#{content_id.to_s}.yml")
+  File.open(yaml_file, "w") do |f|
+    f.write(YAML.dump(body))
+  end
 
-  sent_message = queue.send_message(body.to_json)
+  m = {}
+  m['content_id'] = content_id
+  sent_message = queue.send_message(m.to_json)
   puts (i+1).to_s + "回目に、メッセージを送信しました"
   puts "message_id: " + sent_message.message_id
-  puts ""
   puts "****************************************"
+  puts ""
 end

@@ -3,26 +3,22 @@
 
 require "rubygems"
 require "aws-sdk"
-require File.join(File.dirname(__FILE__), "samples_config")
+require File.join(File.dirname(__FILE__), "../samples_config")
 require File.join(File.dirname(__FILE__), "upload_file")
 require "pp"
+require "yaml"
 
 AMAZON_SQS_TEST_QUEUE = "SQS-Test-Queue-Ruby"
-SQS_TEST_MESSAGE = 'This is a test message.'
 
 
-
-def image_deal(message)
-  result = image_correction(message)
-  image_proccess(message, result)
-end
-
-def image_correction(message)
+def image_correction(s)
   str = ""
-  b = message["bucket_name"]
+  status = s.dup
+  message = status[:correction]
+  b = message[:bucket_name]
   temp = "tmp/tempfile_#{b}.txt"
 
-  download_file(b, message["file_name"], temp)
+  download_file(b, message[:file_name], temp)
 
   File.open(temp, "r") do |f|
     str = f.read
@@ -35,15 +31,21 @@ def image_correction(message)
 
   upload_file(b, correction_file)
 
-  correction_file.gsub(/tmp\//,"")
+  status[:correction][:status] = "done"
+  status[:process] = { :status => "todo",
+                       :bucket_name => b,
+                       :file_name => correction_file.gsub(/tmp\//,"")}
+  status
 end
 
-def image_proccess(message, result)
+def image_process(s)
   str = ""
-  b = message["bucket_name"]
+  status = s.dup
+  message = status[:process]
+  b = message[:bucket_name]
   temp = "tmp/tempfile_#{b}.txt"
 
-  download_file(b, result, temp)
+  download_file(b, message[:file_name], temp)
 
   File.open(temp, "r") do |f|
     str = f.read
@@ -56,34 +58,44 @@ def image_proccess(message, result)
 
   upload_file(b, image_file)
 
-  image_file
+  status[:process][:status] = "done"
+  status
 end
 
 sqs = AWS::SQS.new
-
 queue = sqs.queues.named(AMAZON_SQS_TEST_QUEUE)
-
 
 puts "**************************"
 puts `date`
 puts "**************************"
 
-#flag = true
-#while flag
 22.times do |i|
   sleep 3
   puts "waiting message"
   m = queue.receive_message
   if !m.nil?
     mbody = JSON.parse(m.body)
-    image_deal(mbody)
+    yaml_file = File.join(File.dirname(__FILE__), "tmp/#{mbody['content_id']}.yml")
+    status = YAML.load_file(yaml_file)
+    puts "***#{status[:time]}番目のメッセージを処理する***"
+    puts "message body: #{status}"
 
-    puts "***#{mbody['time']}番目のメッセージを処理する***"
-    puts "message body: #{m.body}"
+    new_status = if status[:correction][:status] == "todo"
+                   result = image_correction(status)
+                   queue.send_message(m.body)
+                   result
+                 elsif status[:process][:status] == "todo"
+                   image_process(status)
+                 else
+                   nil
+                 end
+
+    File.open(yaml_file, "w") do |f|
+      f.write(YAML.dump(new_status))
+    end
 
     puts "delete message"
     m.delete
-#    flag = false
   end
 end
 
