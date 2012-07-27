@@ -17,7 +17,6 @@ domain.decision_tasks.poll('my-task-list') do |task|
       case event.event_type
       when 'WorkflowExecutionStarted'
         task.schedule_activity_task(activity_type, :input => 'abc xyz')
-        task.complete!
       when 'ActivityTaskCompleted'
         task.complete_workflow_execution :result => event.attributes.result
       end
