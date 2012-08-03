@@ -15,7 +15,7 @@ require 'rubygems'
 require 'yaml'
 require 'aws-sdk'
 require 'pp'
-
+=begin
 config_file = File.join(File.dirname(__FILE__), "config.yml")
 unless File.exist?(config_file)
   puts <<END
@@ -40,11 +40,11 @@ secret_access_key: YOUR_SECRET_ACCESS_KEY
 END
   exit 1
 end
-=begin
-config = {}
-config['access_key_id']     = ENV['ACCESS_KEY_ID']
-config['secret_access_key'] = ENV['SECRET_ACCESS_KEY']
-config['sqs_endpoint']      = ENV['SQS_ENDPOINT']
 =end
+config = {}
+config['access_key_id']     = ENV['AWS_ACCESS_KEY_ID']
+config['secret_access_key'] = ENV['AWS_SECRET_ACCESS_KEY']
+#config['sqs_endpoint']      = ENV['SQS_ENDPOINT']
+config['s3_endpoint']       = ENV['AWS_S3_ENDPOINT']
 
 AWS.config(config)
