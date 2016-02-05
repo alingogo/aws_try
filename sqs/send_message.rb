@@ -23,15 +23,24 @@ queue = sqs.queues.named(AMAZON_SQS_TEST_QUEUE)
 
 t = (ARGV[0] || 10).to_i
 t.times do |i|
-  bucket_name = "8342_bucket_" + rand(100000).to_s
+  content_id = rand(100000).to_s
+  bucket_name = "8342_bucket_" + content_id
   file_name = "sample_original.txt"
 
   bn, fn, dl_url = upload_file(bucket_name, file_name)
 
   body = {}
-  body[:bucket_name] = bn
-  body[:file_name]   = fn
+  body[:content_id]  = content_id
+  correction = {}
+  correction[:status]      = 'todo'
+  correction[:bucket_name] = bn
+  correction[:file_name]   = fn
+  body[:correction]  = correction
   body[:time]        = i
+  process = {}
+  process[:status] = 'none'
+  process[:bucket_name] = bn
+  body[:process]   = process
 
   sent_message = queue.send_message(body.to_json)
   puts (i+1).to_s + "回目に、メッセージを送信しました"
